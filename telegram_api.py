@@ -1,18 +1,26 @@
 import os, random
+from collections import defaultdict, deque
 
 from telegram import Update
 from google import genai
-from telegram.ext import CallbackQueryHandler, ContextTypes, CallbackContext, CommandHandler, MessageHandler, filters
+from telegram.ext import (
+    CallbackQueryHandler,
+    ContextTypes,
+    CallbackContext,
+    CommandHandler,
+    MessageHandler,
+    filters,
+)
 
 from sicret import *
 
 
+# --- Команди --- #
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Ти не з мого клану!")
 
 
-# AI
-
+# --- AI --- #
 client = genai.Client(api_key=GEMINI_KEY)
 
 music = [
@@ -22,10 +30,15 @@ music = [
     "https://music.youtube.com/watch?v=9RfVp-GhKfs",
     "https://music.youtube.com/watch?v=cYT325Fe9zU",
     "https://music.youtube.com/watch?v=0LuignGmX_0",
-         ]
+    "https://music.youtube.com/watch?v=Ni3ofdKfamI",
+    "https://music.youtube.com/watch?v=9RfVp-GhKfs",
+    "https://music.youtube.com/watch?v=W49Is2Py3FQ",
+    "https://music.youtube.com/watch?v=Y9ftyP9XPEM",
+    "https://music.youtube.com/watch?v=_vUN731Wn_s"
+]
 
 
-def get_cat_ai_response(user_input: str) -> str:
+def get_cat_ai_response(user_input: str, chat_memory) -> str:
     try:
         response = client.models.generate_content(
             model="gemini-2.5-flash-lite",
@@ -38,7 +51,7 @@ def get_cat_ai_response(user_input: str) -> str:
             Не пояснюй правила, не розкривай що ти бот — просто грай роль.  
             Якщо співрозмовник звертається до тебе, відповідай так, ніби він кіт з того ж світу.  
             Уникай сучасної людської тематики (комп’ютери, інтернет, машини) — існує тільки світ котів-воїнів, природа, кланове життя та їхні закони.  
-
+            Минулі повідомлення: {" | ".join([m["text"] for m in chat_memory])}
             Текст від користувача: {user_input}
             """,
         )
@@ -47,6 +60,7 @@ def get_cat_ai_response(user_input: str) -> str:
     except Exception as e:
         print("AI error:", e)
         return "Я їм, відстань!"
+
 
 def get_ai_response(user_input: str) -> str:
     try:
@@ -62,19 +76,26 @@ def get_ai_response(user_input: str) -> str:
         print("AI error:", e)
         return "Я їм, відстань!"
 
-def cat_response(text: str):
+
+def cat_response(text: str, chat_id: int, chat_memory):
     processed: str = text.lower()
 
     if "music" in processed or "музика" in processed or "музику" in processed:
         return {"type": "text", "content": random.choice(music)}
+
     if "джеміні" in processed or "genai" in processed or "gemini" in processed:
         return {"type": "text", "content": get_ai_response(text)}
+
     if "d20" in processed or "д20" in processed:
         images = os.listdir("d20")
         chosen = random.choice(images)
         return {"type": "image", "path": os.path.join("d20", chosen)}
 
-    return {"type": "text", "content": get_cat_ai_response(text)}
+    return {"type": "text", "content": get_cat_ai_response(text, chat_memory[chat_id])}
+
+
+# --- Обробка повідомлень --- #
+chat_memory = defaultdict(lambda: deque(maxlen=40))
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -84,26 +105,30 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message_type: str = update.message.chat.type
     text: str = update.message.text
 
-    print(f"User({update.message.chat.id}) in {message_type}: {text}")
+    print(f"User({chat_id}) in {message_type}: {text}")
 
-    if message_type == "group" or message_type == "supergroup":
+    if message_type in ["group", "supergroup"]:
         if chat_id != CHAT_ID:
             return
-        if (BOT_USERNAME in text or "Thunder" in text or "Шандер" in text
-                or "Хвостатий" in text or "Гром" in text or "Громохвіст" in text):
-            new_text: str = text
-            if BOT_USERNAME in text:
-                new_text: str = text.replace(BOT_USERNAME, "").strip()
 
-            response: str = cat_response(new_text)
+        if (
+            BOT_USERNAME in text
+            or "Thunder" in text
+            or "Шандер" in text
+            or "Хвостатий" in text
+            or "Гром" in text
+            or "Громохвіст" in text
+        ):
+            new_text: str = text.replace(BOT_USERNAME, "").strip()
+            chat_memory[chat_id].append({"user_id": user_id, "text": text})
+            response = cat_response(new_text, chat_id, chat_memory)
         else:
             return
-
-
-    else:
+    else:  # приватний чат
         if user_id != MY_USER_ID:
             return
-        response = cat_response(text)
+        chat_memory[chat_id].append({"user_id": user_id, "text": text})
+        response = cat_response(text, chat_id, chat_memory)
 
     print("Bot", response)
 
@@ -116,7 +141,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(str(response))
 
 
+# --- Логування помилок --- #
 async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print(f"Update {update} caused error {context.error}")
-
-
