@@ -1,0 +1,31 @@
+[
+  {
+    "id": 1,
+    "keywords": [
+      "авуу",
+      "аву",
+      "awoo"
+    ],
+    "type": "animation",
+    "file_id": "CgACAgUAAxkBAAO2aOKmvLf5wP8mReyaF3MGEwgifbEAAiwAA1DVKVZZo5xl-W0ttDYE"
+  },
+  {
+    "id": 2,
+    "keywords": [
+      "crinje",
+      "cringe",
+      "крінж"
+    ],
+    "type": "video",
+    "file_id": "BAACAgIAAxkBAANwaOJ2PH1yG-ufXkArfgXrychb_ggAAh6HAAKyzhFLuyxZx59aYyM2BA"
+  },
+  {
+    "id": 3,
+    "keywords": [
+      "старий",
+      "старість"
+    ],
+    "type": "sticker",
+    "file_id": "CAACAgEAAxkBAAPAaOLTNZDl0-Dp6uVzHxsQM_7zvo4AAgUCAAKCZHcB8kO1GmJklSM2BA"
+  }
+]
