@@ -2,7 +2,7 @@ from bll.imports import *
 from typing import Final
 
 CHAT_ID: Final = -1001807490957
-CHAT_ID2: Final = -1001807490957
+CHAT_ID2: Final = -1002447585602
 
 MY_USER_ID: Final = 800632151
 BOT_USERNAME: Final = "@Thundertailbot"

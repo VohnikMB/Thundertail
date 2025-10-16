@@ -174,7 +174,7 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
 
         bot_name = (BOT_USERNAME or "").lower().lstrip('@')
-        triggers = [t for t in [bot_name, "thunder", "шандер", "хвостатий", "гром", "громохвіст"] if t]
+        triggers = [t for t in [bot_name, "thunder", "шандер", "хвостатий", "громохвіст"] if t]
 
         # --- Перевірка згадки ---
         mentioned = False
@@ -200,10 +200,10 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if not new_text:
                 new_text = text  # fallback
 
-            chat_memory[chat_id].append({"user_id": user_id, "text": new_text})
+            user_name = update.message.from_user.first_name or f"id_{user_id}"
 
             try:
-                response = get_cat_ai_response(new_text, chat_memory[chat_id])
+                response = get_cat_ai_response(new_text, user_name)
                 if isinstance(response, dict) and response.get("type") == "text":
                     await update.message.reply_text(response["content"])
                 elif isinstance(response, str):
